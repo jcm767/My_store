@@ -42,7 +42,7 @@ export default function BuyButton() {
       >
         {loading ? "Redirecting…" : "Buy"}
       </button>
-      {err && <p style={{ color: "crimson", marginTop: 8 }}>{err}</p>}
+      {err && <p style={{ color: "crimson", marginTop: 12 }}>{err}</p>}
     </div>
   );
 }
