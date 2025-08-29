@@ -1,30 +1,48 @@
-'use client'
+"use client";
+
+import { useState } from "react";
 
 export default function BuyButton() {
-  const buy = async () => {
-    const res = await fetch('/api/checkout', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ quantity: 1 }),
-    })
-    const { url } = await res.json()
-    window.location.href = url
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function handleClick() {
+    setLoading(true);
+    setErr(null);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) throw new Error(`Checkout failed (${res.status}): ${await res.text()}`);
+      const data = (await res.json()) as { url?: string };
+      if (!data.url) throw new Error("Missing Stripe Checkout URL");
+      window.location.assign(data.url);
+    } catch (e: any) {
+      console.error(e);
+      setErr(e?.message ?? "Unknown error");
+      setLoading(false);
+    }
   }
 
   return (
-    <button
-      onClick={buy}
-      style={{
-        padding: '12px 24px',
-        fontSize: '16px',
-        background: '#635bff',
-        color: 'white',
-        border: 'none',
-        borderRadius: '6px',
-        cursor: 'pointer',
-      }}
-    >
-      Buy Now
-    </button>
-  )
+    <div>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={loading}
+        style={{
+          padding: "12px 18px",
+          borderRadius: 8,
+          border: "none",
+          fontSize: 16,
+          background: "#635bff",
+          color: "white",
+        }}
+      >
+        {loading ? "Redirecting…" : "Buy"}
+      </button>
+      {err && <p style={{ color: "crimson", marginTop: 8 }}>{err}</p>}
+    </div>
+  );
 }
