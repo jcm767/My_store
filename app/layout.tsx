@@ -1,4 +1,6 @@
-export const metadata = {
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
   title: 'My Store',
   description: 'Minimal Supabase + Stripe demo',
 }
@@ -16,3 +18,4 @@ export default function RootLayout({
     </html>
   )
 }
+
