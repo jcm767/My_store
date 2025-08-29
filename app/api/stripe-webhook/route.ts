@@ -13,7 +13,7 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const stripe = new Stripe(STRIPE_SECRET_KEY ?? "", { apiVersion: "2024-06-20" });
 
-function getSupabaseAdmin() {
+function supabaseAdmin() {
   if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -34,6 +34,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
   try {
+    // raw body required for signature verification
     const rawBody = await req.text();
     event = stripe.webhooks.constructEvent(rawBody, sig, STRIPE_WEBHOOK_SECRET);
   } catch (err: any) {
@@ -45,14 +46,20 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+
         const stripe_session_id = session.id;
-        const amount_total = session.amount_total ?? null;
+        const amount_total = session.amount_total ?? null; // cents
         const currency = session.currency?.toUpperCase() ?? null;
         const email = session.customer_details?.email ?? null;
 
-        console.log("checkout.session.completed", { stripe_session_id, amount_total, currency, email });
+        console.log("checkout.session.completed", {
+          stripe_session_id,
+          amount_total,
+          currency,
+          email,
+        });
 
-        const sb = getSupabaseAdmin();
+        const sb = supabaseAdmin();
         if (sb) {
           const { error } = await sb.from("purchases").insert({
             stripe_session_id,
